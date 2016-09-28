@@ -1,0 +1,161 @@
+/************Última versión de Programa de pruebas*****************/
+/****Creador: Luis González****************************************/
+/****Editado por: Martín Ortuño************************************/
+
+//valores de sensores en cero
+int valSLA = 0;   
+int valSLB = 0;
+int valSIA = 0;
+int valSIB = 0;
+
+//pines a utilizar
+int SLA = 3;     //Sensor de deteccion de linea A en pin 1
+int SLB = 4;     //Sensor de deteccion de linea B en pin 2
+int SIA = 14;    //Sensor de interseccion A en pin A0
+int SIB = 15;    //Sensor de interseccion B en pin A1
+int US1s = 5;    //Salida sensor ultrasonica 1 en pin 5   //Va conectado a TRIG
+int US1e = 6;    //Entrada sensor ultrasonico 1 en pin 6  //Va a ECHO
+int US2s = A2;   //Salida sensor ultrasonico 2 en pin A2  //Va conectado a TRIG
+int US2e = A3;   //Entrada sensor ultrasonico 2 en pin A3 //Va a ECHO
+int E1MA = 7;    //Entrada 1 Motor A en pin 7
+int E2MA = 8;    //Entrada 2 Motor A en pin 8
+int SAMA = 9;    //Salida analogica Motor A en pin 9
+int E1MB = 10;   //Entrada 1 Motor B en pin 10
+int E2MB = 11;   //Entrada 2 Motor b en pin 11
+int SAMB = 12;   //Salida analogica Motor B en pin 12
+
+//set-up sensor optico
+double dista1;
+double dista2;
+int tiempo1;
+int tiempo2;
+
+bool interseccionDetectada()
+{
+  
+  valSIA=digitalRead(SIA);
+  valSIB=digitalRead(SIB);
+  valSLA=digitalRead(SLA);
+  valSLB=digitalRead(SLB);
+  
+  if(valSLA==0&&valSLB==0&&valSIA==0&&valSIB==0)
+    return true;
+  return false;
+}
+
+void setup() {
+  
+  //declarar pines como salida y entrada
+  Serial.begin(9600);
+  pinMode(SLA, INPUT);       //Entrada sensor de deteccion de linea A 
+  pinMode(SLB, INPUT);       //Entrada sensor de deteccion de linea b 
+  pinMode(SIA, INPUT);       //Entrada sensor de deteccion de interseccion A 
+  pinMode(SIB, INPUT);       //Entrada sensor de deteccion de interseccion B
+  pinMode(US1s, OUTPUT);     //Salida pulso ultrasonico 1 trigger
+  pinMode(US1e, INPUT);      //Entrada, rebote ultrasonico 1 echo
+  pinMode(US2s, OUTPUT);    //Salida pulso ultrasonico 2 trigger
+  pinMode(US2e, INPUT);    //Entrada rebote ultrasonico 2 echo
+  pinMode(E1MA,OUTPUT);     //Eentrada 1 Motor A
+  pinMode(E2MA,OUTPUT);     //Entrada 2 Motor A
+  pinMode(SAMA,OUTPUT);     //Salida analogica Motor A
+  pinMode(E1MB,OUTPUT);     //Eentrada 1 Motor B
+  pinMode(E2MB,OUTPUT);     //Entrada 2 Motor B
+  pinMode(SAMB,OUTPUT);     //Salida analogica Motor B
+       
+}
+
+void loop() {
+  //Serial.println("ciclo");
+  //se cambian valores de los sensores de acuerdo al valor leido 
+  valSLA=digitalRead(SLA);
+  valSLB=digitalRead(SLB);
+  valSIA=digitalRead(SIA);
+  valSIB=digitalRead(SIB);
+  
+ //Serial.println(valSLA);
+  //Serial.println(valSLB);
+  
+  
+  digitalWrite(US1s,LOW);         // Estabilizacion sensor ultrasonico 1
+  delayMicroseconds(5);
+  digitalWrite(US1s, HIGH);       //Pulso ultrasonico en sensor 1
+  delayMicroseconds(10);
+  digitalWrite(US1s,LOW);         //Faltaba mandar el trigger a LOW
+  tiempo1=pulseIn(US1e, HIGH);    // Función para medir la longitud del pulso entrante del sensor 1
+  dista1= 0.017*tiempo1;          //Calculo de la distancia 1 //la decalración de int no es necesaria
+  Serial.println("DistS1:   ");     // Display del monitor serial
+  Serial.println(dista1);
+  Serial.println(" cm\n");
+  digitalWrite(US2s,LOW);         // Estabilizacion sensor ultrasonico 2
+  delayMicroseconds(5);
+  digitalWrite(US2s, HIGH);       //Pulso ultrasonico en sensor 2
+  delayMicroseconds(10);
+  digitalWrite(US1s,LOW); 
+  tiempo2=pulseIn(US2e, HIGH);    // Función para medir la longitud del pulso entrante del sensor 2
+  dista2= 0.017*tiempo2;     //Calculo de la distancia 2
+  Serial.println("DistS2");       // Display del monitor serial
+  Serial.println(dista2);
+  Serial.println(" cm");
+  delay(100);
+  
+  /*
+  //Si se encuentra un obstaculo
+  if((dista1>=10 && dista1<=25)||(dista2>=10 && dista2<=25)){
+    digitalWrite(E1MA,LOW);
+    digitalWrite(E2MA,LOW);
+    digitalWrite(E1MB,LOW);
+    digitalWrite(E2MB,LOW);
+    Serial.println("Parado");
+  }*/
+    
+  //si robot llega a interseccion por el momento
+  if(interseccionDetectada()) {
+    
+    //Serial.println("Se para el robot");
+    
+  }
+  
+  
+  //si robot va derecho sobre linea blanca
+  if(valSLA==0&&valSLB==0&&valSIA==1&&valSIB==1) {
+    digitalWrite(E1MA,LOW);
+    digitalWrite(E2MA,HIGH);
+    analogWrite(SAMA,170);
+    digitalWrite(E1MB,LOW);
+    digitalWrite(E2MB,HIGH);
+    analogWrite(SAMB,170); 
+    //Serial.println("Avanza");   
+  }
+  
+  //si robot se desvia hacia la izquierda
+  if(valSLA==0&&valSLB==1&&valSIA==1&&valSIB==1) {  
+    //Se mueve hacia la derecha
+    digitalWrite(E1MA,LOW);
+    digitalWrite(E2MA,HIGH);
+    analogWrite(SAMA,170);
+    digitalWrite(E1MB,LOW);
+    digitalWrite(E2MB,HIGH);
+    analogWrite(SAMB,185); 
+    //Serial.println("Derecha");
+    
+  }
+  
+   //si robot se desvia hacia la derecha
+  if(valSLA==1&&valSLB==0&&valSIA==1&&valSIB==1) {
+    //Se mueve hacia la izquierda
+    digitalWrite(E1MA,LOW);
+    digitalWrite(E2MA,HIGH);
+    analogWrite(SAMA,185);
+    digitalWrite(E1MB,LOW);
+    digitalWrite(E2MB,HIGH);
+    analogWrite(SAMB,170); 
+    //Serial.println("Izquierda");
+    
+  }
+  
+
+   
+  
+  
+  
+}
